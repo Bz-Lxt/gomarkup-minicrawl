@@ -1,0 +1,76 @@
+# MiniCrawl — 开发环境（随机端口）
+# 交付标准化端口见 /deploy 阶段
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - TZ=Asia/Shanghai
+      - LOG_LEVEL=info
+      - CRAWL_MODE=mock
+      - HTTP_ADDR=:8080
+    ports:
+      - "18421:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 8s
+
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+    ports:
+      - "18422:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  frontend-user:
+    build:
+      context: ./frontend-user
+      dockerfile: Dockerfile
+    ports:
+      - "18423:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - TZ=Asia/Shanghai
+    profiles: ["qa"]
+
+  qa:
+    image: python:3.12-alpine
+    working_dir: /tests
+    volumes:
+      - ./tests:/tests
+    environment:
+      - TZ=Asia/Shanghai
+      - API_URL=http://backend:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["qa"]
+    command: sh -c "pip install -q -r requirements.txt && pytest -q api_smoke.py"
