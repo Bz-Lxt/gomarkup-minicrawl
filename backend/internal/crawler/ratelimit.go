@@ -46,5 +46,5 @@ func (l *Limiter) Wait(ctx context.Context, host string) error {
 		l.hosts[host] = lim
 	}
 	l.mu.Unlock()
-	return lim.Wait(context.WithoutCancel(ctx))
+	return lim.Wait(ctx)
 }
