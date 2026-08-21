@@ -75,7 +75,11 @@ func (q *DedupQueue) Done() {
 	if q.inflight > 0 {
 		q.inflight--
 	}
-	if len(q.items) == 0 {
+	// Only auto-close when there are no pending items AND no pages still
+	// being processed by other workers.  If inflight > 0 another worker may
+	// still discover links that must enter the queue; closing here would
+	// silently drop them and cause a premature "completed".
+	if len(q.items) == 0 && q.inflight == 0 {
 		q.closed = true
 		q.cond.Broadcast()
 	}
