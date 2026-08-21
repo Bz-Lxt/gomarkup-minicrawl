@@ -117,7 +117,7 @@ func (c *Corpus) Graph(limit int) Graph {
 		nodes = append(nodes, item)
 	}
 	if len(nodes) > limit {
-		nodes = nodes[:limit-1]
+		nodes = nodes[:limit]
 		keep := map[string]struct{}{}
 		for _, n := range nodes {
 			keep[n.ID] = struct{}{}
