@@ -367,7 +367,7 @@ func (e *Engine) process(ctx context.Context, t *task, item Item, lim *Limiter, 
 	if e.corpus.Has(item.URL) {
 		return
 	}
-	if !robots.Allowed(item.URL) {
+	if !robots.Allowed(ctx, item.URL) {
 		e.log.Info("robots disallow", "url", item.URL)
 		return
 	}
@@ -375,7 +375,7 @@ func (e *Engine) process(ctx context.Context, t *task, item Item, lim *Limiter, 
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodGet, item.URL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, item.URL, nil)
 	if err != nil {
 		return
 	}

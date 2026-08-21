@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,13 +27,13 @@ func NewRobots(client *http.Client, ua string) *Robots {
 	return &Robots{client: client, ua: ua, cache: make(map[string]robotGroup)}
 }
 
-func (r *Robots) Allowed(raw string) bool {
+func (r *Robots) Allowed(ctx context.Context, raw string) bool {
 	u, err := url.Parse(raw)
 	if err != nil {
 		return false
 	}
 	host := strings.ToLower(u.Hostname())
-	group := r.group(u.Scheme, u.Host, host)
+	group := r.group(ctx, u.Scheme, u.Host, host)
 	path := u.EscapedPath()
 	if path == "" {
 		path = "/"
@@ -48,7 +49,7 @@ func (r *Robots) Allowed(raw string) bool {
 	return true
 }
 
-func (r *Robots) group(scheme, hostPort, host string) robotGroup {
+func (r *Robots) group(ctx context.Context, scheme, hostPort, host string) robotGroup {
 	r.mu.Lock()
 	if g, ok := r.cache[host]; ok {
 		r.mu.Unlock()
@@ -56,16 +57,16 @@ func (r *Robots) group(scheme, hostPort, host string) robotGroup {
 	}
 	r.mu.Unlock()
 
-	g := r.fetch(scheme, hostPort)
+	g := r.fetch(ctx, scheme, hostPort)
 	r.mu.Lock()
 	r.cache[host] = g
 	r.mu.Unlock()
 	return g
 }
 
-func (r *Robots) fetch(scheme, hostPort string) robotGroup {
+func (r *Robots) fetch(ctx context.Context, scheme, hostPort string) robotGroup {
 	robotsURL := fmt.Sprintf("%s://%s/robots.txt", scheme, hostPort)
-	req, err := http.NewRequest(http.MethodGet, robotsURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, robotsURL, nil)
 	if err != nil {
 		return robotGroup{}
 	}
