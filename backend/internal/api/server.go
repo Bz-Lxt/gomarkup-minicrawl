@@ -23,7 +23,7 @@ type Server struct {
 }
 
 func New(log *slog.Logger, engine *crawler.Engine, corpus *store.Corpus, inv *index.Inverted, mode string) http.Handler {
-	s := &Server{log: log, engine: engine, corpus: corpus, mode: mode}
+	s := &Server{log: log, engine: engine, corpus: corpus, index: inv, mode: mode}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", s.health)
 	mux.HandleFunc("GET /api/stats", s.stats)
