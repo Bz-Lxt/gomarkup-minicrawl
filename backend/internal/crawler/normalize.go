@@ -55,7 +55,9 @@ func Normalize(raw string) (string, error) {
 		for _, k := range keys {
 			vals := append([]string{}, q[k]...)
 			sort.Strings(vals)
-			nq.Set(k, vals[0])
+			for _, v := range vals {
+				nq.Add(k, v)
+			}
 		}
 		u.RawQuery = nq.Encode()
 	} else {
