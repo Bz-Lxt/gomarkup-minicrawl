@@ -324,8 +324,8 @@ func (e *Engine) run(t *task) {
 				if !ok {
 					return
 				}
-				defer t.queue.Done()
 				e.process(ctx, t, item, lim, robots)
+				t.queue.Done()
 			}
 		}()
 	}
