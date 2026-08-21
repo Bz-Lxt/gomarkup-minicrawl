@@ -130,7 +130,9 @@ func newID() string {
 func (e *Engine) Create(s Strategy) (*TaskView, error) {
 	s = clampStrategy(s)
 
-	seeds := s.Seeds[:0]
+	// Build an independent slice so the task owns a snapshot of the seeds,
+	// unaffected by any later reuse of the caller's backing array.
+	seeds := make([]string, 0, len(s.Seeds))
 	for _, raw := range s.Seeds {
 		if urlfilter.ShouldSkip(raw) && !strings.HasPrefix(raw, "/") {
 			continue
