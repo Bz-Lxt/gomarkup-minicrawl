@@ -26,6 +26,7 @@ type task struct {
 	status    Status
 	strategy  Strategy
 	crawled   atomic.Int32
+	failures  atomic.Int32
 	err       string
 	createdAt time.Time
 	startedAt time.Time
@@ -202,6 +203,7 @@ func (e *Engine) viewLocked(t *task) *TaskView {
 		Status:      t.status,
 		Strategy:    t.strategy,
 		Crawled:     int(t.crawled.Load()),
+		Failures:    int(t.failures.Load()),
 		QueueLength: t.queue.Len(),
 		Error:       t.err,
 		CreatedAt:   timeutil.Format(t.createdAt),
@@ -338,7 +340,11 @@ func (e *Engine) run(t *task) {
 		e.finish(t, StatusStopped, "")
 		return
 	}
-	e.finish(t, StatusCompleted, "")
+	if f := t.failures.Load(); f > 0 {
+		e.finish(t, StatusCompleted, fmt.Sprintf("%d URL(s) failed (skipped)", f))
+	} else {
+		e.finish(t, StatusCompleted, "")
+	}
 }
 
 func (e *Engine) finish(t *task, st Status, err string) {
@@ -383,7 +389,7 @@ func (e *Engine) process(ctx context.Context, t *task, item Item, lim *Limiter, 
 	resp, err := e.client.Do(req)
 	if err != nil {
 		e.log.Debug("fetch failed", "url", item.URL, "err", err)
-		t.cancel()
+		t.failures.Add(1)
 		return
 	}
 	defer resp.Body.Close()

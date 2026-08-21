@@ -120,6 +120,7 @@ const statusTone = (s) => ({
             <th class="py-2">ID</th>
             <th>状态</th>
             <th>已爬</th>
+            <th>失败</th>
             <th>创建时间</th>
             <th>操作</th>
           </tr>
@@ -127,8 +128,12 @@ const statusTone = (s) => ({
         <tbody>
           <tr v-for="t in sorted" :key="t.id" class="border-t border-line/80">
             <td class="py-3 font-mono text-xs">{{ t.id }}</td>
-            <td :class="statusTone(t.status)">{{ t.status }}</td>
+            <td :class="statusTone(t.status)">
+              {{ t.status }}
+              <p v-if="t.error" class="text-xs text-danger">{{ t.error }}</p>
+            </td>
             <td>{{ t.crawled }}</td>
+            <td :class="t.failures > 0 ? 'text-danger' : 'text-mute'">{{ t.failures || 0 }}</td>
             <td class="font-mono text-xs">{{ t.created_at }}</td>
             <td class="space-x-2">
               <button v-if="t.status==='running'" class="text-cyan hover:underline" type="button" @click="emit('pause', t.id)">暂停</button>
@@ -138,7 +143,7 @@ const statusTone = (s) => ({
             </td>
           </tr>
           <tr v-if="!sorted.length">
-            <td colspan="5" class="py-8 text-center text-mute">尚无任务</td>
+            <td colspan="6" class="py-8 text-center text-mute">尚无任务</td>
           </tr>
         </tbody>
       </table>

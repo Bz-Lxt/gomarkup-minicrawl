@@ -26,6 +26,7 @@ type TaskView struct {
 	Status      Status   `json:"status"`
 	Strategy    Strategy `json:"strategy"`
 	Crawled     int      `json:"crawled"`
+	Failures    int      `json:"failures"`
 	QueueLength int      `json:"queue_length"`
 	Error       string   `json:"error,omitempty"`
 	CreatedAt   string   `json:"created_at"`
